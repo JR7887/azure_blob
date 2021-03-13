@@ -5,6 +5,11 @@ import logging
 import os.path
 from azure.storage.blob import BlobServiceClient, ContainerClient, BlobClient
 
+"""BlobServiceClient allows us to manipulate the resources of AZURE stockage et the blob containers.
+ConainerClient allows us to manipulate the containers of the AZURE stockage and theirs blobs.
+BlobClient , this class allows us to manipulate the blobs of the AZURE stockage.
+"""
+
 
 def listb(args, containerclient):
 
@@ -17,14 +22,18 @@ def listb(args, containerclient):
 def upload(cible, blobclient):
 
     """This function allows us  to upload a blob from our PC to the  conteneur AZURE"""
+    logging.info(f"Ouverture du fichier {cible} pour envoyer ")
     with open(cible, "rb") as f:
+        logging.warning(f"envoi les fichiers sur le container {blobclient}")
         blobclient.upload_blob(f)
 
 
 def download(filename, dl_folder, blobclient):
 
     """This function allows us to download a blob from the conteneur AZURE to our PC"""
+    logging.info(f"Ouverture du fichier {filename} pour le telecharger ")
     with open(os.path.join(dl_folder,filename), "wb") as my_blob:
+        logging.warning(f"recuperation des fichiers {filename} sur le container {blobclient}")
         blob_data=blobclient.download_blob()
         blob_data.readinto(my_blob)
 
@@ -36,18 +45,24 @@ def main(args,config):
     else if the argument is upload it will upload the blob from the contenur AZURE to our pc 
     otherwise if the argument is download it will download the blob from the conteneur to our pc
     """
+    logging.info("lancement de la fonction main")
     blobclient=BlobServiceClient(
         f"https://{config['storage']['account']}.blob.core.windows.net",
         config["storage"]["key"],
         logging_enable=False)
+    logging.debug("connection au compte de stockage effectuer")
     containerclient=blobclient.get_container_client(config["storage"]["container"])
+    logging.debug("connection au container de stockage")
     if args.action=="list":
+        logging.debug("l'arg list a été passé. Lancement de la fonction liste")
         return listb(args, containerclient)
     else:
         if args.action=="upload":
             blobclient=containerclient.get_blob_client(os.path.basename(args.cible))
+            logging.debug("arg upload a été passé. Lancement de la fonction upload")
             return upload(args.cible, blobclient)
         elif args.action=="download":
+            logging.debug("arg download a été passé. Lancement de la fonction download")
             blobclient=containerclient.get_blob_client(os.path.basename(args.remote))
             return download(args.remote, config["general"]["restoredir"], blobclient)
     
